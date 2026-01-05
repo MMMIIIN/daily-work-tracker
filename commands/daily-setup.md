@@ -11,19 +11,9 @@ Daily Work Tracker 대화형 설정을 진행합니다.
 
 AskUserQuestion 도구를 사용해서 순서대로 설정을 진행하세요.
 
-### 1단계: 디렉토리 초기화
+### 1단계: 사용자에게 설정 질문
 
-먼저 필요한 디렉토리를 생성합니다:
-
-```bash
-mkdir -p ~/.claude/daily-work-tracker
-mkdir -p ~/.claude/daily-work
-mkdir -p ~/.claude/daily-summaries
-```
-
-### 2단계: 사용자에게 설정 질문
-
-AskUserQuestion 도구로 다음 질문들을 **한 번에** 물어보세요:
+**먼저** AskUserQuestion 도구로 다음 질문들을 **한 번에** 물어보세요:
 
 **질문 1**: 저장 경로
 - header: "저장 경로"
@@ -54,13 +44,29 @@ AskUserQuestion 도구로 다음 질문들을 **한 번에** 물어보세요:
   - label: "아니오"
     description: "수동으로만 동기화"
 
-### 3단계: 저장 경로 설정 (사용자가 "직접 입력" 선택 시)
+### 2단계: 저장 경로 설정
 
-"직접 입력"을 선택하면 추가 질문:
+사용자 응답에 따라:
+
+**"기본 경로" 선택 시:**
+```bash
+mkdir -p ~/.claude/daily-work-tracker
+mkdir -p ~/.claude/daily-work
+mkdir -p ~/.claude/daily-summaries
+```
+- log_path = "~/.claude/daily-work"
+- summary_path = "~/.claude/daily-summaries"
+
+**"직접 입력" 선택 시:**
 - AskUserQuestion으로 "로그 저장 경로를 입력해주세요 (예: ~/Documents/daily-work)" 질문
-- 입력받은 경로로 디렉토리 생성
+- 입력받은 경로로 디렉토리 생성:
+  ```bash
+  mkdir -p [사용자입력경로]
+  mkdir -p ~/.claude/daily-work-tracker
+  ```
+- log_path = 사용자 입력 경로
 
-### 4단계: Notion 설정 (사용자가 "예" 선택 시)
+### 3단계: Notion 설정 (사용자가 "예" 선택 시)
 
 Notion을 사용하겠다고 하면:
 
@@ -72,19 +78,20 @@ Notion을 사용하겠다고 하면:
 2. **설정 안 되어 있으면** 안내:
    - Notion Integration 생성 필요 (https://www.notion.so/my-integrations)
    - API 키를 받아서 ~/.claude.json에 MCP 서버 추가 필요
+   - 설정 후 다시 /daily-setup 실행하라고 안내
 
 3. **설정 되어 있으면** 페이지 ID 요청:
    - AskUserQuestion으로 "Notion 페이지 URL을 입력해주세요" 질문
    - URL에서 페이지 ID 추출 (32자리 hex)
 
-### 5단계: 자동 동기화 시간 (사용자가 "다른 시간" 선택 시)
+### 4단계: 자동 동기화 시간 (사용자가 "다른 시간" 선택 시)
 
 "예 (다른 시간)"을 선택하면:
 - AskUserQuestion으로 "몇 시에 동기화할까요?" 질문 (09:00, 12:00, 21:00 등 옵션 제공)
 
-### 6단계: 설정 파일 생성
+### 5단계: 설정 파일 생성
 
-사용자 응답을 바탕으로 설정 파일을 생성합니다:
+모든 응답을 수집한 후 설정 파일을 생성합니다:
 
 ```bash
 cat > ~/.claude/daily-work-tracker/config.json << 'EOF'
@@ -105,7 +112,7 @@ cat > ~/.claude/daily-work-tracker/config.json << 'EOF'
 EOF
 ```
 
-### 7단계: 완료 메시지
+### 6단계: 완료 메시지
 
 설정 완료 후 요약을 보여주세요:
 
