@@ -13,12 +13,18 @@
 
 ## 설치
 
-### GitHub에서 설치
+### 1단계: 마켓플레이스 추가
 
 Claude Code 터미널에서:
 
 ```
-/plugin install daily-work-tracker@MMMIIIN/daily-work-tracker
+/plugin marketplace add MMMIIIN/daily-work-tracker
+```
+
+### 2단계: 플러그인 설치
+
+```
+/plugin install daily-work-tracker@daily-work-tracker
 ```
 
 ### 설치 확인
@@ -26,6 +32,8 @@ Claude Code 터미널에서:
 ```
 /plugin list
 ```
+
+**참고**: 설치 후 Claude Code를 재시작하면 플러그인이 활성화됩니다.
 
 ## 명령어
 
