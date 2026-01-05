@@ -155,16 +155,6 @@ def main():
             with open(log_file, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(new_lines))
 
-        # 이전 대화가 있으면 요약 트리거
-        if not is_new_file and project_exists:
-            output = {
-                "hookSpecificOutput": {
-                    "hookEventName": "UserPromptSubmit",
-                    "additionalContext": f"<daily-tracker-reminder>\n이전 답변을 1줄로 요약해서 {log_file} 파일의 [{project_name}] 프로젝트 마지막 항목 옆에 ' → 요약내용' 형식으로 추가하세요.\n</daily-tracker-reminder>"
-                }
-            }
-            print(json.dumps(output))
-
         sys.exit(0)
 
     except Exception as e:

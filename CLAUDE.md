@@ -31,22 +31,6 @@ python3 scripts/setup.py --log-path "~/my-logs" --summary-path "~/my-summaries"
 1. `generate-summary.py --save`로 로컬에 저장
 2. 저장 위치: `~/.claude/daily-summaries/YYYY-MM-DD-summary.md`
 
-## 답변 요약 규칙
-
-`<daily-tracker-reminder>` 메시지가 표시되면:
-
-1. 해당 날짜 파일(`~/.claude/daily-work/YYYY-MM-DD.md`)을 읽기
-2. 지정된 프로젝트 섹션에서 마지막 항목 찾기
-3. 이전 답변을 1줄로 요약해서 해당 항목 끝에 ` → 요약내용` 형식으로 추가
-4. 그 후 현재 질문에 대한 답변 진행
-
-## 요약 작성 가이드
-
-- 최대 50자 이내로 간결하게
-- 코드 수정 시: 파일명과 수정 내용
-- 설명/논의 시: 핵심 결론
-- 파일명은 백틱으로 감싸기
-
 ## 명령어
 
 ### 기본 명령어
