@@ -2,33 +2,64 @@
 
 여러 프로젝트에서 작업한 내역을 날짜별로 자동 추적하는 Claude Code 플러그인입니다.
 
-## 기능
+## 주요 기능
 
-- 대화할 때마다 자동으로 작업 기록
-- 프로젝트별로 섹션 분리
-- 날짜별 MD 파일 생성
-- 일일/주간 요약 조회
+- **자동 작업 기록**: 대화할 때마다 프로젝트별로 자동 기록
+- **프로젝트별 분리**: 여러 프로젝트 작업을 하나의 파일에서 섹션별로 관리
+- **날짜별 파일**: `~/.claude/daily-work/YYYY-MM-DD.md` 형식으로 저장
+- **Notion 연동**: Notion MCP를 통해 자동 동기화 (선택)
+- **로컬 저장**: Notion 미연결 시 로컬 MD 파일로 저장
+- **저장 경로 설정**: 로그 및 요약 파일 경로 커스터마이징 가능
 
 ## 설치
 
-```bash
-claude plugin install /Users/mingwanchoi/daily-work-tracker
+### GitHub에서 설치
+
+Claude Code 터미널에서:
+
+```
+/plugin install daily-work-tracker@MMMIIIN/daily-work-tracker
 ```
 
-또는 테스트:
+### 설치 확인
 
-```bash
-claude --plugin-dir /Users/mingwanchoi/daily-work-tracker
 ```
+/plugin list
+```
+
+## 명령어
+
+| 명령어 | 설명 |
+|--------|------|
+| `/daily-work-tracker:daily-summary` | 오늘 작업 내역 보기 |
+| `/daily-work-tracker:daily-week` | 이번 주 작업 요약 |
+| `/daily-work-tracker:daily-clear` | 오늘 기록 삭제 |
+| `/daily-work-tracker:daily-setup` | 초기 설정 (Notion MCP + 스케줄) |
+| `/daily-work-tracker:daily-path` | 저장 경로 설정 |
+| `/daily-work-tracker:daily-sync` | Notion/로컬에 동기화 |
+| `/daily-work-tracker:daily-status` | 설정 상태 확인 |
 
 ## 저장 위치
 
+### 기본 경로
+
 ```
-~/.claude/daily-work/
+~/.claude/daily-work/          # 작업 로그
 ├── 2026-01-05.md
 ├── 2026-01-04.md
 └── ...
+
+~/.claude/daily-summaries/     # 일일 요약
+├── 2026-01-05-summary.md
+└── ...
+
+~/.claude/daily-work-tracker/  # 설정
+└── config.json
 ```
+
+### 경로 변경
+
+`/daily-work-tracker:daily-path` 명령어로 저장 경로 변경 가능
 
 ## 파일 형식
 
@@ -36,25 +67,58 @@ claude --plugin-dir /Users/mingwanchoi/daily-work-tracker
 # 📅 2026-01-05 작업 기록
 
 ## 🔹 flutter-app
-> `/Users/mingwanchoi/projects/flutter-app`
+> `/Users/username/projects/flutter-app`
 
 - **[14:30]** 사용자 인증 어떻게 구현하면 좋을까? → Riverpod 추천
 - **[15:00]** 로그인 화면 만들어줘 → `login_page.dart` 생성
 
 ## 🔹 backend-api
-> `/Users/mingwanchoi/projects/backend-api`
+> `/Users/username/projects/backend-api`
 
 - **[16:00]** API 엔드포인트 설계 → REST API 구조 제안
 ```
 
-## 명령어
+## 설정
 
-| 명령어 | 설명 |
-|--------|------|
-| `/daily-summary` | 오늘 작업 내역 보기 |
-| `/daily-summary 2026-01-04` | 특정 날짜 조회 |
-| `/daily-week` | 이번 주 요약 |
-| `/daily-clear` | 오늘 기록 삭제 |
+### 설정 파일 구조
+
+`~/.claude/daily-work-tracker/config.json`:
+
+```json
+{
+  "storage": {
+    "log_path": "~/.claude/daily-work",
+    "summary_path": "~/.claude/daily-summaries"
+  },
+  "notion_mcp": {
+    "enabled": false,
+    "page_id": "",
+    "mcp_server_name": "notion"
+  },
+  "schedule": {
+    "enabled": false,
+    "time": "18:00",
+    "timezone": "Asia/Seoul"
+  },
+  "fallback": {
+    "save_local": true
+  }
+}
+```
+
+### Notion MCP 연동 (선택)
+
+1. Notion MCP 서버 설정 (`.claude.json`)
+2. `/daily-work-tracker:daily-setup` 실행
+3. Notion 페이지 ID 입력
+4. 자동 동기화 시간 설정
+
+## 동작 방식
+
+1. **UserPromptSubmit Hook**: 사용자가 질문할 때마다 `log-daily.py` 실행
+2. **프로젝트 감지**: `pubspec.yaml`, `package.json` 또는 폴더명으로 프로젝트 식별
+3. **자동 기록**: 날짜별 MD 파일에 타임스탬프와 함께 저장
+4. **요약 트리거**: 이전 답변 요약을 자동으로 추가하도록 Claude에게 알림
 
 ## 라이선스
 
