@@ -56,15 +56,42 @@ def get_project_name(cwd):
     return os.path.basename(cwd)
 
 
-def summarize_prompt(prompt, max_length=150):
-    """프롬프트 요약 (첫 줄 또는 max_length까지)"""
-    # 첫 줄만 추출
-    first_line = prompt.strip().split('\n')[0]
+def format_prompt(prompt, max_length=150):
+    """프롬프트 포맷팅 (여러 줄은 들여쓰기 형태로, 15줄 초과시 앞 10줄 + 뒤 5줄)"""
+    lines = prompt.strip().split('\n')
 
-    # 길이 제한
+    # 빈 줄 제거하고 각 줄 trim
+    lines = [line.strip() for line in lines if line.strip()]
+
+    if not lines:
+        return ''
+
+    # 15줄 초과 시 앞 10줄 + 뒤 5줄
+    if len(lines) > 15:
+        head = lines[:10]
+        tail = lines[-5:]
+        lines = head + ['...'] + tail
+
+    # 첫 줄 처리
+    first_line = lines[0]
     if len(first_line) > max_length:
-        return first_line[:max_length] + '...'
-    return first_line
+        first_line = first_line[:max_length] + '...'
+
+    # 한 줄만 있으면 그대로 반환
+    if len(lines) == 1:
+        return first_line
+
+    # 여러 줄이면 들여쓰기 형태로 반환
+    result = [first_line]
+    for line in lines[1:]:
+        if line == '...':
+            result.append('  ...')
+        else:
+            if len(line) > max_length:
+                line = line[:max_length] + '...'
+            result.append(f'  {line}')  # 2칸 들여쓰기
+
+    return '\n'.join(result)
 
 
 def main():
@@ -110,8 +137,8 @@ def main():
                 file_content = f.read()
                 project_exists = project_section_marker in file_content
 
-        # 프롬프트 요약
-        prompt_summary = summarize_prompt(prompt)
+        # 프롬프트 포맷팅
+        prompt_summary = format_prompt(prompt)
 
         # 새 항목 작성
         new_entry = f'- **[{timestamp}]** {prompt_summary}\n'
