@@ -69,6 +69,32 @@ def init_config():
     return config
 
 
+def get_log_path(config):
+    """로그 경로 반환 (storage.log_path 또는 paths.log 지원)"""
+    # 새 형식: storage.log_path
+    storage_config = config.get('storage', {})
+    if 'log_path' in storage_config:
+        return storage_config['log_path']
+    # 기존 형식: paths.log
+    paths_config = config.get('paths', {})
+    if 'log' in paths_config:
+        return paths_config['log']
+    return '~/.claude/daily-work'
+
+
+def get_summary_path(config):
+    """요약 경로 반환 (storage.summary_path 또는 paths.summary 지원)"""
+    # 새 형식: storage.summary_path
+    storage_config = config.get('storage', {})
+    if 'summary_path' in storage_config:
+        return storage_config['summary_path']
+    # 기존 형식: paths.summary
+    paths_config = config.get('paths', {})
+    if 'summary' in paths_config:
+        return paths_config['summary']
+    return '~/.claude/daily-summaries'
+
+
 def check_setup_status():
     """설정 상태 확인"""
     config = load_config()
@@ -84,13 +110,12 @@ def check_setup_status():
     # notion_mcp 또는 기존 notion 키 지원
     notion_config = config.get('notion_mcp', config.get('notion', {}))
 
-    storage_config = config.get('storage', {})
     sync_history = config.get('sync_history', [])
 
     return {
         "configured": True,
-        "log_path": storage_config.get('log_path', '~/.claude/daily-work'),
-        "summary_path": storage_config.get('summary_path', '~/.claude/daily-summaries'),
+        "log_path": get_log_path(config),
+        "summary_path": get_summary_path(config),
         "notion_mcp_enabled": notion_config.get('enabled', False),
         "notion_page_id": notion_config.get('page_id', ''),
         "mcp_server_name": notion_config.get('mcp_server_name', 'notion'),
@@ -145,8 +170,7 @@ def get_unsynced_dates():
     if not config:
         return []
 
-    storage_config = config.get('storage', {})
-    log_path = os.path.expanduser(storage_config.get('log_path', '~/.claude/daily-work'))
+    log_path = os.path.expanduser(get_log_path(config))
     sync_history = config.get('sync_history', [])
 
     if not os.path.exists(log_path):
