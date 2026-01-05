@@ -1,0 +1,9 @@
+{
+  "name": "daily-work-tracker",
+  "version": "1.0.0",
+  "description": "여러 프로젝트의 일일 작업을 날짜별로 추적하고 요약합니다",
+  "author": {
+    "name": "chemi"
+  },
+  "hooks": "./hooks/hooks.json"
+}

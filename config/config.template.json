@@ -1,0 +1,24 @@
+{
+  "storage": {
+    "log_path": "~/.claude/daily-work",
+    "summary_path": "~/.claude/daily-summaries"
+  },
+  "notion_mcp": {
+    "enabled": false,
+    "page_id": "",
+    "mcp_server_name": "notion"
+  },
+  "schedule": {
+    "enabled": false,
+    "time": "18:00",
+    "timezone": "Asia/Seoul"
+  },
+  "fallback": {
+    "save_local": true
+  },
+  "settings": {
+    "auto_summary": true,
+    "include_projects": [],
+    "exclude_projects": []
+  }
+}
