@@ -29,15 +29,15 @@ def get_config():
 def get_log_path():
     """로그 저장 경로 반환"""
     config = get_config()
-    storage = config.get('storage', {})
-    return os.path.expanduser(storage.get('log_path', '~/.claude/daily-work'))
+    paths = config.get('paths', {})
+    return os.path.expanduser(paths.get('log', '~/.claude/daily-work'))
 
 
 def get_summary_path():
     """요약 저장 경로 반환"""
     config = get_config()
-    storage = config.get('storage', {})
-    return os.path.expanduser(storage.get('summary_path', '~/.claude/daily-summaries'))
+    paths = config.get('paths', {})
+    return os.path.expanduser(paths.get('summary', '~/.claude/daily-summaries'))
 
 
 def get_daily_log(date_str=None):
@@ -99,6 +99,38 @@ def parse_daily_log(content):
     return projects
 
 
+def generate_project_summary(project):
+    """프로젝트별 요약 생성"""
+    task_count = len(project['tasks'])
+
+    # 주요 작업 키워드 추출 (간단한 방식)
+    keywords = []
+    for task in project['tasks']:
+        content = task['content']
+        # 주요 동작어 추출
+        if '추가' in content or '생성' in content:
+            keywords.append('기능 추가')
+        elif '수정' in content or '변경' in content or '개선' in content:
+            keywords.append('수정/개선')
+        elif '삭제' in content or '제거' in content:
+            keywords.append('삭제')
+        elif '테스트' in content or '확인' in content:
+            keywords.append('테스트')
+        elif '설정' in content or '설치' in content:
+            keywords.append('설정')
+
+    # 중복 제거
+    keywords = list(dict.fromkeys(keywords))
+
+    if not keywords:
+        keywords = ['작업 진행']
+
+    return {
+        'task_count': task_count,
+        'keywords': keywords[:3]  # 최대 3개
+    }
+
+
 def generate_markdown_summary(projects, date_str):
     """Markdown 형식 요약 생성"""
     lines = []
@@ -117,10 +149,24 @@ def generate_markdown_summary(projects, date_str):
             lines.append(f"- **[{task['time']}]** {task['content']}")
             total_tasks += 1
 
+        # 프로젝트별 요약
+        summary = generate_project_summary(project)
+        lines.append(f"\n> 📊 **요약**: {summary['task_count']}개 대화 | 주요 작업: {', '.join(summary['keywords'])}")
         lines.append("")
 
+    # 전체 요약
     lines.append("---")
-    lines.append(f"\n📊 **통계**: {len(projects)}개 프로젝트, {total_tasks}개 작업")
+    lines.append(f"\n## 📊 전체 요약")
+    lines.append(f"- **프로젝트**: {len(projects)}개")
+    lines.append(f"- **총 대화**: {total_tasks}개")
+
+    # 전체 주요 작업
+    all_keywords = []
+    for project in projects:
+        summary = generate_project_summary(project)
+        all_keywords.extend(summary['keywords'])
+    all_keywords = list(dict.fromkeys(all_keywords))[:5]
+    lines.append(f"- **주요 작업**: {', '.join(all_keywords)}")
 
     return '\n'.join(lines)
 
@@ -141,6 +187,8 @@ def generate_notion_blocks(projects, date_str):
         "type": "divider",
         "divider": {}
     })
+
+    total_tasks = 0
 
     for project in projects:
         # 프로젝트 제목
@@ -171,10 +219,57 @@ def generate_notion_blocks(projects, date_str):
                     ]
                 }
             })
+            total_tasks += 1
+
+        # 프로젝트별 요약
+        summary = generate_project_summary(project)
+        blocks.append({
+            "type": "callout",
+            "callout": {
+                "rich_text": [{"type": "text", "text": {"content": f"📊 요약: {summary['task_count']}개 대화 | 주요 작업: {', '.join(summary['keywords'])}"}}],
+                "icon": {"emoji": "📊"}
+            }
+        })
 
     blocks.append({
         "type": "divider",
         "divider": {}
+    })
+
+    # 전체 요약
+    blocks.append({
+        "type": "heading_3",
+        "heading_3": {
+            "rich_text": [{"type": "text", "text": {"content": "📊 전체 요약"}}]
+        }
+    })
+
+    # 전체 주요 작업
+    all_keywords = []
+    for project in projects:
+        proj_summary = generate_project_summary(project)
+        all_keywords.extend(proj_summary['keywords'])
+    all_keywords = list(dict.fromkeys(all_keywords))[:5]
+
+    blocks.append({
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [{"type": "text", "text": {"content": f"프로젝트: {len(projects)}개"}}]
+        }
+    })
+
+    blocks.append({
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [{"type": "text", "text": {"content": f"총 대화: {total_tasks}개"}}]
+        }
+    })
+
+    blocks.append({
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [{"type": "text", "text": {"content": f"주요 작업: {', '.join(all_keywords)}"}}]
+        }
     })
 
     return blocks
@@ -247,19 +342,24 @@ def main():
 
     elif args.format == 'notion':
         blocks = generate_notion_blocks(projects, date_str)
+        total_tasks = sum(len(p['tasks']) for p in projects)
         result = {
             "success": True,
             "date": date_str,
             "projects_count": len(projects),
+            "total_tasks": total_tasks,
             "blocks": blocks,
             "format": "notion"
         }
         print(json.dumps(result, ensure_ascii=False, indent=2))
 
     elif args.format == 'json':
+        total_tasks = sum(len(p['tasks']) for p in projects)
         result = {
             "success": True,
             "date": date_str,
+            "projects_count": len(projects),
+            "total_tasks": total_tasks,
             "projects": projects,
             "format": "json"
         }
