@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Daily Work Tracker - 초기 설정 스크립트
-플러그인 처음 설치 시 Notion MCP 연동 및 스케줄 설정
+플러그인 처음 설치 시 Notion MCP 연동 설정
 """
 import json
 import os
@@ -54,11 +54,6 @@ def init_config():
                 "page_id": "",
                 "mcp_server_name": "notion"
             },
-            "schedule": {
-                "enabled": False,
-                "time": "18:00",
-                "timezone": "Asia/Seoul"
-            },
             "fallback": {
                 "save_local": True
             },
@@ -66,7 +61,8 @@ def init_config():
                 "auto_summary": True,
                 "include_projects": [],
                 "exclude_projects": []
-            }
+            },
+            "sync_history": []
         }
 
     save_config(config)
@@ -81,7 +77,6 @@ def check_setup_status():
         return {
             "configured": False,
             "notion_mcp_enabled": False,
-            "schedule_enabled": False,
             "fallback_enabled": True,
             "message": "설정이 필요합니다. /daily-setup을 실행해주세요."
         }
@@ -90,6 +85,7 @@ def check_setup_status():
     notion_config = config.get('notion_mcp', config.get('notion', {}))
 
     storage_config = config.get('storage', {})
+    sync_history = config.get('sync_history', [])
 
     return {
         "configured": True,
@@ -98,9 +94,9 @@ def check_setup_status():
         "notion_mcp_enabled": notion_config.get('enabled', False),
         "notion_page_id": notion_config.get('page_id', ''),
         "mcp_server_name": notion_config.get('mcp_server_name', 'notion'),
-        "schedule_enabled": config.get('schedule', {}).get('enabled', False),
-        "schedule_time": config.get('schedule', {}).get('time', ''),
         "fallback_enabled": config.get('fallback', {}).get('save_local', True),
+        "synced_dates_count": len(sync_history),
+        "last_synced": sync_history[-1] if sync_history else None,
         "message": "설정 완료"
     }
 
@@ -128,22 +124,44 @@ def update_notion_mcp_config(page_id=None, enabled=None, mcp_server_name=None):
     return config
 
 
-def update_schedule_config(time=None, enabled=None, timezone=None):
-    """스케줄 설정 업데이트"""
+def add_sync_history(date_str):
+    """동기화 기록 추가"""
     config = load_config() or init_config()
 
-    if 'schedule' not in config:
-        config['schedule'] = {"enabled": False, "time": "18:00", "timezone": "Asia/Seoul"}
+    if 'sync_history' not in config:
+        config['sync_history'] = []
 
-    if time is not None:
-        config['schedule']['time'] = time
-    if enabled is not None:
-        config['schedule']['enabled'] = enabled
-    if timezone is not None:
-        config['schedule']['timezone'] = timezone
+    if date_str not in config['sync_history']:
+        config['sync_history'].append(date_str)
+        config['sync_history'].sort()
 
     save_config(config)
     return config
+
+
+def get_unsynced_dates():
+    """동기화되지 않은 날짜 목록 반환"""
+    config = load_config()
+    if not config:
+        return []
+
+    storage_config = config.get('storage', {})
+    log_path = os.path.expanduser(storage_config.get('log_path', '~/.claude/daily-work'))
+    sync_history = config.get('sync_history', [])
+
+    if not os.path.exists(log_path):
+        return []
+
+    # 로그 파일에서 날짜 추출
+    log_dates = []
+    for f in os.listdir(log_path):
+        if f.endswith('.md') and f != 'debug.log':
+            date_str = f.replace('.md', '')
+            if date_str not in sync_history:
+                log_dates.append(date_str)
+
+    log_dates.sort()
+    return log_dates
 
 
 def update_fallback_config(save_local=None):
@@ -193,10 +211,9 @@ def main():
     parser.add_argument('--notion-enable', action='store_true', help='Notion MCP 연동 활성화')
     parser.add_argument('--notion-disable', action='store_true', help='Notion MCP 연동 비활성화')
 
-    # 스케줄 설정
-    parser.add_argument('--schedule-time', type=str, help='스케줄 시간 설정 (HH:MM)')
-    parser.add_argument('--schedule-enable', action='store_true', help='스케줄 활성화')
-    parser.add_argument('--schedule-disable', action='store_true', help='스케줄 비활성화')
+    # 동기화 기록
+    parser.add_argument('--add-sync', type=str, help='동기화 기록 추가 (YYYY-MM-DD)')
+    parser.add_argument('--unsynced', action='store_true', help='동기화되지 않은 날짜 목록')
 
     # Fallback 설정
     parser.add_argument('--fallback-enable', action='store_true', help='로컬 저장 활성화')
@@ -230,14 +247,15 @@ def main():
         print(json.dumps(config.get('notion_mcp', {}), indent=2, ensure_ascii=False))
         return
 
-    # 스케줄 설정
-    if args.schedule_time or args.schedule_enable or args.schedule_disable:
-        config = update_schedule_config(
-            time=args.schedule_time,
-            enabled=True if args.schedule_enable else (False if args.schedule_disable else None)
-        )
-        print("스케줄 설정이 업데이트되었습니다.")
-        print(json.dumps(config.get('schedule', {}), indent=2, ensure_ascii=False))
+    # 동기화 기록
+    if args.add_sync:
+        config = add_sync_history(args.add_sync)
+        print(f"동기화 기록 추가: {args.add_sync}")
+        return
+
+    if args.unsynced:
+        unsynced = get_unsynced_dates()
+        print(json.dumps({"unsynced_dates": unsynced}, indent=2, ensure_ascii=False))
         return
 
     # Fallback 설정

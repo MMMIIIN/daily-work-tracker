@@ -1,86 +1,97 @@
 ---
-description: 오늘 작업 요약을 Notion에 동기화하거나 로컬에 저장
+description: 작업 요약을 Notion에 동기화하거나 로컬에 저장 (미동기화 날짜 일괄 처리)
 user_invocable: true
 ---
 
 # Daily Sync
 
-오늘 작업 기록을 Notion 페이지에 즉시 동기화합니다.
+작업 기록을 Notion 페이지에 동기화합니다. 동기화되지 않은 모든 날짜를 자동으로 찾아서 일괄 처리합니다.
 
 ## 실행 단계
 
-### 1단계: 설정 확인
-
-설정 파일에서 Notion 페이지 ID를 확인하세요:
+### 1단계: 설정 및 미동기화 날짜 확인
 
 ```bash
-cat ~/.claude/daily-work-tracker/config.json 2>/dev/null || echo '{"notion":{"enabled":false}}'
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/setup.py --status
 ```
-
-### 2단계: 오늘 작업 기록 확인
-
-오늘 작업 기록이 있는지 확인:
 
 ```bash
-cat ~/.claude/daily-work/$(date +%Y-%m-%d).md 2>/dev/null || echo "오늘 작업 기록 없음"
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/setup.py --unsynced
 ```
 
-### 3단계: 요약 생성
+위 명령어로 다음을 확인:
+- Notion MCP 활성화 여부 (`notion_mcp_enabled`)
+- 페이지 ID (`notion_page_id`)
+- 동기화되지 않은 날짜 목록 (`unsynced_dates`)
 
-작업 기록이 있으면 Notion 블록 형식으로 요약 생성:
+### 2단계: 동기화 대상 결정
+
+- 인자로 날짜가 지정되면 해당 날짜만 동기화
+- 인자 없으면 **모든 미동기화 날짜** 동기화
+
+### 3단계: 각 날짜별 동기화
+
+**미동기화 날짜가 있으면**, 각 날짜에 대해:
+
+1. 해당 날짜의 작업 기록 읽기:
+```bash
+cat ~/.claude/daily-work/[날짜].md
+```
+
+2. **Notion MCP가 활성화되어 있으면**:
+
+`mcp__notion__notion-update-page` 도구를 사용해서 페이지에 내용 추가:
+
+```
+mcp__notion__notion-update-page({
+  data: {
+    page_id: "[config의 notion_page_id]",
+    command: "insert_content_after",
+    selection_with_ellipsis: "가장 최근 내용...",
+    new_str: "## [날짜] 작업 기록\n\n[작업 내용]"
+  }
+})
+```
+
+또는 페이지가 비어있으면 `replace_content` 사용.
+
+3. **동기화 성공 후 기록 저장**:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/setup.py --add-sync [날짜]
+```
+
+### 4단계: Fallback (Notion 미설정 시)
+
+Notion이 비활성화되어 있으면 로컬에 저장:
 
 ```bash
-python3 ~/daily-work-tracker/scripts/generate-summary.py --format notion
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate-summary.py --save --date [날짜]
 ```
 
-### 4단계: Notion에 동기화
-
-**설정에서 Notion이 활성화되어 있고 (`notion.enabled: true`), 페이지 ID가 있으면:**
-
-Notion MCP 도구 `mcp__notion__API-patch-block-children`를 사용해서 페이지에 블록 추가:
-
-1. 3단계에서 생성된 `blocks` 배열을 가져옴
-2. 설정 파일의 `notion.page_id` 값 사용
-3. Notion MCP 호출:
-
-```
-mcp__notion__API-patch-block-children(
-  block_id: "[page_id from config]",
-  children: [
-    {
-      "type": "paragraph",
-      "paragraph": {
-        "rich_text": [{"type": "text", "text": {"content": "[요약 내용]"}}]
-      }
-    }
-  ]
-)
-```
-
-**Notion 비활성화 또는 연결 실패 시:**
-
-로컬에 저장:
-
+저장 후 동기화 기록 추가:
 ```bash
-python3 ~/daily-work-tracker/scripts/generate-summary.py --save
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/setup.py --add-sync [날짜]
 ```
 
 ### 5단계: 결과 출력
 
-동기화 완료 후:
+동기화 완료 후 결과 요약:
 
-- **Notion 동기화 성공**: "✅ Notion 페이지에 동기화 완료!"
-- **로컬 저장**: "📁 로컬에 저장 완료: ~/.claude/daily-summaries/YYYY-MM-DD-summary.md"
-- **작업 기록 없음**: "⚠️ 오늘 작업 기록이 없습니다."
+| 상태 | 메시지 |
+|------|--------|
+| Notion 성공 | "✅ [N]개 날짜 Notion에 동기화 완료!" |
+| 로컬 저장 | "📁 [N]개 날짜 로컬에 저장 완료" |
+| 이미 동기화됨 | "✅ 모든 작업이 이미 동기화되어 있습니다." |
+| 작업 기록 없음 | "⚠️ 동기화할 작업 기록이 없습니다." |
 
 ## 인자
 
-날짜 지정 가능:
-- `/daily-sync` → 오늘
-- `/daily-sync 2026-01-04` → 특정 날짜
+- `/daily-sync` → 모든 미동기화 날짜
+- `/daily-sync 2026-01-04` → 특정 날짜만
 
 ## 중요
 
-- Notion MCP가 설정되어 있어야 동기화 가능
+- Notion MCP가 설정되어 있어야 Notion 동기화 가능
 - Notion 미설정 시 자동으로 로컬에 저장
 - `/daily-setup`으로 Notion 설정 가능
+- 동기화 기록은 `~/.claude/daily-work-tracker/config.json`의 `sync_history`에 저장

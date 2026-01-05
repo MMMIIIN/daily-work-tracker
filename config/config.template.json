@@ -8,11 +8,6 @@
     "page_id": "",
     "mcp_server_name": "notion"
   },
-  "schedule": {
-    "enabled": false,
-    "time": "18:00",
-    "timezone": "Asia/Seoul"
-  },
   "fallback": {
     "save_local": true
   },
@@ -20,5 +15,6 @@
     "auto_summary": true,
     "include_projects": [],
     "exclude_projects": []
-  }
+  },
+  "sync_history": []
 }

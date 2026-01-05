@@ -24,8 +24,8 @@ python3 scripts/setup.py --log-path "~/my-logs" --summary-path "~/my-summaries"
 ## 동기화 방식
 
 ### Notion MCP 연결 시
-1. `generate-summary.py --format notion`으로 블록 생성
-2. Notion MCP 도구로 페이지에 추가
+1. `mcp__notion__notion-update-page` 도구로 페이지에 내용 추가
+2. 동기화 완료 후 `sync_history`에 날짜 기록
 
 ### Notion MCP 미연결 시 (Fallback)
 1. `generate-summary.py --save`로 로컬에 저장
@@ -39,40 +39,28 @@ python3 scripts/setup.py --log-path "~/my-logs" --summary-path "~/my-summaries"
 - `/daily-clear` - 오늘 기록 삭제
 
 ### 설정 명령어
-- `/daily-setup` - 초기 설정 (Notion MCP + 스케줄)
+- `/daily-setup` - 초기 설정 (Notion MCP 연동)
 - `/daily-path` - 저장 경로 설정 (로그/요약 파일 위치)
 - `/daily-status` - 설정 상태 확인
 
 ### 동기화 명령어
-- `/daily-sync` - Notion/로컬에 동기화
+- `/daily-sync` - Notion/로컬에 동기화 (미동기화 날짜 일괄 처리)
 
 ## /daily-sync 실행 시
 
 1. 설정 파일 확인 (`~/.claude/daily-work-tracker/config.json`)
-2. Notion MCP 연결 여부 확인
-3. **MCP 연결됨**: Notion MCP 도구로 페이지에 블록 추가
+2. 미동기화 날짜 목록 확인 (`setup.py --unsynced`)
+3. **MCP 연결됨**: Notion MCP 도구로 페이지에 내용 추가
 4. **MCP 미연결**: 로컬 `~/.claude/daily-summaries/`에 저장
+5. 동기화 완료 후 기록 저장 (`setup.py --add-sync [날짜]`)
 
-## Notion MCP 도구 사용
+## 동기화 기록
 
-Notion MCP가 연결되어 있을 때 동기화:
-
-```bash
-# 1. 요약 생성
-python3 ~/daily-work-tracker/scripts/generate-summary.py --format notion
-```
-
-```
-# 2. 출력된 blocks를 Notion MCP 도구로 전달
-notion_append_block_children(
-  page_id: "설정된_페이지_ID",
-  children: [blocks]
-)
-```
+동기화된 날짜는 config.json의 `sync_history` 배열에 저장됩니다.
+`/daily-sync` 실행 시 동기화되지 않은 모든 날짜를 자동으로 찾아서 일괄 처리합니다.
 
 ## 초기 설정 (/daily-setup)
 
 1. Notion MCP 사용 여부 확인
 2. 사용 시: 페이지 ID 설정
 3. 미사용 시: 로컬 저장 모드
-4. 자동 동기화 시간 설정 (기본: 18:00)

@@ -46,7 +46,6 @@ Claude Code 터미널에서:
 대화형으로 모든 설정을 진행합니다:
 1. **저장 경로** - 로그 파일 저장 위치 선택
 2. **Notion 연동** - Notion MCP 활성화 여부
-3. **자동 동기화** - 매일 동기화 시간 설정
 
 ### 설정 파일 구조
 
@@ -54,18 +53,15 @@ Claude Code 터미널에서:
 
 ```json
 {
-  "notion": {
+  "notion_mcp": {
     "enabled": true,
     "page_id": "your-notion-page-id"
   },
-  "schedule": {
-    "enabled": true,
-    "time": "17:00"
+  "storage": {
+    "log_path": "~/.claude/daily-work",
+    "summary_path": "~/.claude/daily-summaries"
   },
-  "paths": {
-    "log": "~/.claude/daily-work",
-    "summary": "~/.claude/daily-summaries"
-  }
+  "sync_history": ["2026-01-04", "2026-01-05"]
 }
 ```
 
@@ -132,8 +128,8 @@ Notion에 Toggle 블록으로 날짜+시간별 정리:
 
 | 명령어 | 설명 |
 |--------|------|
-| `/daily-work-tracker:daily-setup` | 초기 설정 (저장 경로, Notion, 스케줄) |
-| `/daily-work-tracker:daily-sync` | Notion/로컬에 동기화 |
+| `/daily-work-tracker:daily-setup` | 초기 설정 (저장 경로, Notion) |
+| `/daily-work-tracker:daily-sync` | Notion/로컬에 동기화 (미동기화 날짜 일괄 처리) |
 | `/daily-work-tracker:daily-summary` | 오늘 작업 내역 보기 |
 | `/daily-work-tracker:daily-week` | 이번 주 작업 요약 |
 | `/daily-work-tracker:daily-status` | 설정 상태 확인 |

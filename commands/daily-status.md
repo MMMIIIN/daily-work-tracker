@@ -10,13 +10,13 @@ user_invocable: true
 ## 실행 방법
 
 ```bash
-python3 ~/daily-work-tracker/scripts/setup.py --status
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/setup.py --status
 ```
 
-## 스케줄러 상태 확인
+## 미동기화 날짜 확인
 
 ```bash
-bash ~/daily-work-tracker/scripts/install-scheduler.sh status
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/setup.py --unsynced
 ```
 
 ## 출력 예시
@@ -24,10 +24,13 @@ bash ~/daily-work-tracker/scripts/install-scheduler.sh status
 ```json
 {
   "configured": true,
-  "notion_enabled": true,
+  "log_path": "~/.claude/daily-work",
+  "summary_path": "~/.claude/daily-summaries",
+  "notion_mcp_enabled": true,
   "notion_page_id": "abc123def456",
-  "schedule_enabled": true,
-  "schedule_time": "18:00",
+  "fallback_enabled": true,
+  "synced_dates_count": 5,
+  "last_synced": "2026-01-04",
   "message": "설정 완료"
 }
 ```
@@ -37,7 +40,8 @@ bash ~/daily-work-tracker/scripts/install-scheduler.sh status
 | 항목 | 설명 |
 |------|------|
 | `configured` | 설정 파일 존재 여부 |
-| `notion_enabled` | Notion 연동 활성화 여부 |
+| `log_path` | 작업 로그 저장 경로 |
+| `notion_mcp_enabled` | Notion MCP 연동 활성화 여부 |
 | `notion_page_id` | 설정된 Notion 페이지 ID |
-| `schedule_enabled` | 자동 동기화 활성화 여부 |
-| `schedule_time` | 자동 동기화 시간 |
+| `synced_dates_count` | 동기화된 날짜 수 |
+| `last_synced` | 마지막 동기화 날짜 |
