@@ -88,38 +88,96 @@ Claude Code 터미널에서:
 
 ## 설정
 
+### 빠른 설정 (권장)
+
+```
+/daily-work-tracker:daily-setup
+```
+
+대화형으로 모든 설정을 진행합니다:
+1. **저장 경로** - 로그 파일 저장 위치 선택
+2. **Notion 연동** - Notion MCP 활성화 여부
+3. **자동 동기화** - 매일 동기화 시간 설정
+
 ### 설정 파일 구조
 
 `~/.claude/daily-work-tracker/config.json`:
 
 ```json
 {
-  "storage": {
-    "log_path": "~/.claude/daily-work",
-    "summary_path": "~/.claude/daily-summaries"
-  },
-  "notion_mcp": {
-    "enabled": false,
-    "page_id": "",
-    "mcp_server_name": "notion"
+  "notion": {
+    "enabled": true,
+    "page_id": "your-notion-page-id"
   },
   "schedule": {
-    "enabled": false,
-    "time": "18:00",
-    "timezone": "Asia/Seoul"
+    "enabled": true,
+    "time": "17:00"
   },
-  "fallback": {
-    "save_local": true
+  "paths": {
+    "log": "~/.claude/daily-work",
+    "summary": "~/.claude/daily-summaries"
   }
 }
 ```
 
 ### Notion MCP 연동 (선택)
 
-1. Notion MCP 서버 설정 (`.claude.json`)
-2. `/daily-work-tracker:daily-setup` 실행
-3. Notion 페이지 ID 입력
-4. 자동 동기화 시간 설정
+Notion에 일일 작업 요약을 자동 동기화하려면:
+
+#### 1단계: Notion Integration 생성
+
+1. [Notion Integrations](https://www.notion.so/my-integrations) 페이지 접속
+2. "New integration" 클릭
+3. 이름 입력 후 생성
+4. **Internal Integration Secret** 복사 (`ntn_` 또는 `secret_`으로 시작)
+
+#### 2단계: Notion MCP 서버 설정
+
+`~/.claude.json`에 추가:
+
+```json
+{
+  "mcpServers": {
+    "notion": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {
+        "OPENAPI_MCP_HEADERS": "{\"Authorization\": \"Bearer YOUR_API_KEY\", \"Notion-Version\": \"2022-06-28\"}"
+      }
+    }
+  }
+}
+```
+
+#### 3단계: Notion 페이지에 Integration 연결
+
+1. 동기화할 Notion 페이지 열기
+2. 우측 상단 `⋯` 클릭
+3. "연결" → 생성한 Integration 선택
+4. 페이지 URL에서 ID 복사: `notion.so/페이지이름-{페이지ID}`
+
+#### 4단계: 플러그인 설정
+
+```
+/daily-work-tracker:daily-setup
+```
+
+- Notion 활성화 선택
+- 복사한 페이지 ID 입력
+
+### 동기화 형식
+
+Notion에 Toggle 블록으로 날짜별 정리:
+
+```
+📅 2026-01-05 | 4개 프로젝트 | 29개 대화
+├─ 🔹 project-name
+│   ├─ [15:23] 질문 내용
+│   ├─ [16:00] 다른 질문
+│   └─ 📝 요약: Claude가 생성한 프로젝트 요약
+└─ 📊 전체 요약
+```
 
 ## 동작 방식
 
