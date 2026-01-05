@@ -35,35 +35,6 @@ Claude Code 터미널에서:
 
 **참고**: 설치 후 Claude Code를 재시작하면 플러그인이 활성화됩니다.
 
-## 삭제
-
-### 플러그인 완전 삭제
-
-```
-/plugin uninstall daily-work-tracker
-```
-
-### 플러그인 비활성화
-
-```
-/plugin disable daily-work-tracker@daily-work-tracker
-```
-
-### 데이터 삭제 (선택)
-
-플러그인 삭제 후에도 기록된 데이터는 유지됩니다. 데이터도 삭제하려면:
-
-```bash
-# 작업 로그 삭제
-rm -rf ~/.claude/daily-work/
-
-# 일일 요약 삭제
-rm -rf ~/.claude/daily-summaries/
-
-# 설정 파일 삭제
-rm -rf ~/.claude/daily-work-tracker/
-```
-
 ## 설정
 
 ### 빠른 설정 (권장)
@@ -214,6 +185,35 @@ Notion에 Toggle 블록으로 날짜+시간별 정리:
 2. **프로젝트 감지**: `pubspec.yaml`, `package.json` 또는 폴더명으로 프로젝트 식별
 3. **자동 기록**: 날짜별 MD 파일에 타임스탬프와 함께 저장
 4. **요약 트리거**: 이전 답변 요약을 자동으로 추가하도록 Claude에게 알림
+
+## 삭제
+
+### 플러그인 완전 삭제
+
+```
+/plugin uninstall daily-work-tracker
+```
+
+### 플러그인 비활성화
+
+```
+/plugin disable daily-work-tracker@daily-work-tracker
+```
+
+### 데이터 삭제 (선택)
+
+플러그인 삭제 후에도 기록된 데이터는 유지됩니다. 데이터도 삭제하려면:
+
+```bash
+# 작업 로그 삭제
+rm -rf ~/.claude/daily-work/
+
+# 일일 요약 삭제
+rm -rf ~/.claude/daily-summaries/
+
+# 설정 파일 삭제
+rm -rf ~/.claude/daily-work-tracker/
+```
 
 ## 라이선스
 
