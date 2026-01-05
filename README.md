@@ -37,16 +37,16 @@ Claude Code 터미널에서:
 
 ## 삭제
 
+### 플러그인 완전 삭제
+
+```
+/plugin uninstall daily-work-tracker
+```
+
 ### 플러그인 비활성화
 
 ```
 /plugin disable daily-work-tracker@daily-work-tracker
-```
-
-### 플러그인 완전 삭제
-
-```
-/plugin uninstall daily-work-tracker@daily-work-tracker
 ```
 
 ### 데이터 삭제 (선택)
