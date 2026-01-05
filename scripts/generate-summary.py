@@ -172,7 +172,110 @@ def generate_markdown_summary(projects, date_str):
 
 
 def generate_notion_blocks(projects, date_str):
-    """Notion API 블록 형식 생성"""
+    """Notion API 블록 형식 생성 (toggle 블록으로 날짜별 정리)"""
+
+    # 전체 통계 계산
+    total_tasks = sum(len(p['tasks']) for p in projects)
+    all_keywords = []
+    for project in projects:
+        proj_summary = generate_project_summary(project)
+        all_keywords.extend(proj_summary['keywords'])
+    all_keywords = list(dict.fromkeys(all_keywords))[:5]
+
+    # 내부 블록 (toggle 안에 들어갈 내용)
+    children_blocks = []
+
+    for project in projects:
+        # 프로젝트 제목
+        children_blocks.append({
+            "type": "heading_3",
+            "heading_3": {
+                "rich_text": [{"type": "text", "text": {"content": f"🔹 {project['name']}"}}]
+            }
+        })
+
+        # 프로젝트 경로
+        if project['path']:
+            children_blocks.append({
+                "type": "quote",
+                "quote": {
+                    "rich_text": [{"type": "text", "text": {"content": project['path']}}]
+                }
+            })
+
+        # 작업 목록
+        for task in project['tasks']:
+            children_blocks.append({
+                "type": "bulleted_list_item",
+                "bulleted_list_item": {
+                    "rich_text": [
+                        {"type": "text", "text": {"content": f"[{task['time']}] "}, "annotations": {"bold": True}},
+                        {"type": "text", "text": {"content": task['content']}}
+                    ]
+                }
+            })
+
+        # 프로젝트별 요약
+        summary = generate_project_summary(project)
+        children_blocks.append({
+            "type": "callout",
+            "callout": {
+                "rich_text": [{"type": "text", "text": {"content": f"📊 요약: {summary['task_count']}개 대화 | 주요 작업: {', '.join(summary['keywords'])}"}}],
+                "icon": {"emoji": "📊"}
+            }
+        })
+
+    children_blocks.append({
+        "type": "divider",
+        "divider": {}
+    })
+
+    # 전체 요약
+    children_blocks.append({
+        "type": "heading_3",
+        "heading_3": {
+            "rich_text": [{"type": "text", "text": {"content": "📊 전체 요약"}}]
+        }
+    })
+
+    children_blocks.append({
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [{"type": "text", "text": {"content": f"프로젝트: {len(projects)}개"}}]
+        }
+    })
+
+    children_blocks.append({
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [{"type": "text", "text": {"content": f"총 대화: {total_tasks}개"}}]
+        }
+    })
+
+    children_blocks.append({
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [{"type": "text", "text": {"content": f"주요 작업: {', '.join(all_keywords)}"}}]
+        }
+    })
+
+    # 최상위 toggle 블록 (날짜별 접을 수 있는 형태)
+    toggle_block = {
+        "type": "toggle",
+        "toggle": {
+            "rich_text": [
+                {"type": "text", "text": {"content": f"📅 {date_str}"}, "annotations": {"bold": True}},
+                {"type": "text", "text": {"content": f" | {len(projects)}개 프로젝트 | {total_tasks}개 대화 | {', '.join(all_keywords[:3])}"}}
+            ],
+            "children": children_blocks
+        }
+    }
+
+    return [toggle_block]
+
+
+def generate_notion_blocks_flat(projects, date_str):
+    """Notion API 블록 형식 생성 (toggle 없이 평면 구조)"""
     blocks = []
 
     # 헤더
