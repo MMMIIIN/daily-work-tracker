@@ -40,7 +40,7 @@ cat ~/.claude/daily-work/[날짜].md
 
 2. **Notion MCP가 활성화되어 있으면**:
 
-`mcp__notion__notion-update-page` 도구를 사용해서 페이지에 내용 추가:
+`mcp__notion__notion-update-page` 도구를 사용해서 페이지에 **토글 형태**로 내용 추가:
 
 ```
 mcp__notion__notion-update-page({
@@ -48,10 +48,22 @@ mcp__notion__notion-update-page({
     page_id: "[config의 notion_page_id]",
     command: "insert_content_after",
     selection_with_ellipsis: "가장 최근 내용...",
-    new_str: "## [날짜] 작업 기록\n\n[작업 내용]"
+    new_str: "[토글 형태의 마크다운]"
   }
 })
 ```
+
+**토글 형태 마크다운 예시** (Notion-flavored Markdown):
+```markdown
+▶ 📅 2026-01-05 작업 기록
+	▶ 🔹 project-name
+		- **[15:23]** 질문 내용
+		- **[16:00]** 다른 질문
+	▶ 🔹 another-project
+		- **[17:00]** 작업 내용
+```
+
+**중요**: 토글 내부 컨텐츠는 반드시 **탭으로 들여쓰기** 해야 함.
 
 또는 페이지가 비어있으면 `replace_content` 사용.
 
