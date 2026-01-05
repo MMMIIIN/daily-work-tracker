@@ -25,8 +25,8 @@ def get_config():
 def get_log_path():
     """로그 저장 경로 반환"""
     config = get_config()
-    storage = config.get('storage', {})
-    return os.path.expanduser(storage.get('log_path', '~/.claude/daily-work'))
+    paths = config.get('paths', {})
+    return os.path.expanduser(paths.get('log', '~/.claude/daily-work'))
 
 
 def get_project_name(cwd):
