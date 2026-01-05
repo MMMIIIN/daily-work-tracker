@@ -61,7 +61,7 @@ mcp__notion__notion-update-page({
 
 **토글 형태 마크다운 예시** (Notion-flavored Markdown):
 ```markdown
-▶ 📅 2026-01-15 작업 기록 | 2개 프로젝트
+▶ 📅 2026-01-15 14:30 작업 기록 | 2개 프로젝트
 	▶ 🔹 shopping-app
 		> `/home/user/projects/shopping-app`
 		- **[10:30]** 장바구니 기능 구현 요청
