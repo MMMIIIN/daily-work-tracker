@@ -5,102 +5,106 @@ user_invocable: true
 
 # Daily Setup
 
-Daily Work Tracker 플러그인의 초기 설정을 진행합니다.
+Daily Work Tracker 대화형 설정을 진행합니다.
 
 ## 설정 흐름
 
-### 1단계: 설정 파일 초기화
+AskUserQuestion 도구를 사용해서 순서대로 설정을 진행하세요.
+
+### 1단계: 디렉토리 초기화
+
+먼저 필요한 디렉토리를 생성합니다:
 
 ```bash
-python3 ~/daily-work-tracker/scripts/setup.py --init
+mkdir -p ~/.claude/daily-work-tracker
+mkdir -p ~/.claude/daily-work
+mkdir -p ~/.claude/daily-summaries
 ```
 
-### 2단계: Notion MCP 연결 확인
+### 2단계: 사용자에게 설정 질문
 
-사용자에게 물어보세요:
+AskUserQuestion 도구로 다음 질문들을 **한 번에** 물어보세요:
 
-**"Notion MCP를 사용하시겠습니까?"**
+**질문 1**: Notion MCP 사용
+- header: "Notion"
+- question: "Notion에 작업 기록을 동기화하시겠습니까?"
+- options:
+  - label: "예"
+    description: "로컬 저장 + Notion 페이지에 동기화"
+  - label: "아니오"
+    description: "로컬에만 저장 (기본)"
 
-- **예**: Notion MCP 설정 진행 (3단계)
-- **아니오**: 로컬 저장 모드 사용 (4단계로 건너뛰기)
+**질문 2**: 자동 동기화
+- header: "자동 동기화"
+- question: "매일 자동으로 동기화할까요?"
+- options:
+  - label: "예 (18:00)"
+    description: "매일 오후 6시에 자동 동기화"
+  - label: "예 (다른 시간)"
+    description: "원하는 시간 직접 입력"
+  - label: "아니오"
+    description: "수동으로만 동기화"
 
-### 3단계: Notion MCP 설정 (선택)
+### 3단계: Notion 설정 (사용자가 "예" 선택 시)
 
-Notion MCP를 사용하려면:
+Notion을 사용하겠다고 하면:
 
-1. **Notion MCP 서버 설치 확인**
+1. Notion MCP 서버가 설정되어 있는지 확인:
    ```bash
-   # .claude.json에 notion MCP 서버가 있는지 확인
-   cat ~/.claude.json | grep -A5 "notion"
+   grep -A5 '"notion"' ~/.claude.json
    ```
 
-2. **없으면 안내**:
-   ```
-   Notion MCP 서버를 먼저 설정해야 합니다.
+2. **설정 안 되어 있으면** 안내:
+   - Notion Integration 생성 필요 (https://www.notion.so/my-integrations)
+   - API 키를 받아서 ~/.claude.json에 MCP 서버 추가 필요
 
-   .claude.json에 다음을 추가하세요:
-   {
-     "mcpServers": {
-       "notion": {
-         "type": "stdio",
-         "command": "npx",
-         "args": ["-y", "@notionhq/notion-mcp-server"],
-         "env": {
-           "NOTION_API_KEY": "your-api-key"
-         }
-       }
-     }
-   }
-   ```
+3. **설정 되어 있으면** 페이지 ID 요청:
+   - AskUserQuestion으로 "Notion 페이지 URL을 입력해주세요" 질문
+   - URL에서 페이지 ID 추출 (32자리 hex)
 
-3. **Notion 페이지 ID 설정**:
-   ```bash
-   python3 ~/daily-work-tracker/scripts/setup.py --notion-page "페이지ID"
-   python3 ~/daily-work-tracker/scripts/setup.py --notion-enable
-   ```
+### 4단계: 설정 파일 생성
 
-### 4단계: 스케줄 설정
-
-자동 동기화 시간을 설정합니다:
-
-사용자에게 물어보세요: **"매일 몇 시에 자동 동기화할까요? (예: 18:00)"**
+사용자 응답을 바탕으로 설정 파일을 생성합니다:
 
 ```bash
-python3 ~/daily-work-tracker/scripts/setup.py --schedule-time "사용자입력"
-python3 ~/daily-work-tracker/scripts/setup.py --schedule-enable
+cat > ~/.claude/daily-work-tracker/config.json << 'EOF'
+{
+  "notion": {
+    "enabled": [true/false],
+    "page_id": "[페이지ID 또는 빈 문자열]"
+  },
+  "schedule": {
+    "enabled": [true/false],
+    "time": "[시간 또는 18:00]"
+  },
+  "paths": {
+    "log": "~/.claude/daily-work",
+    "summary": "~/.claude/daily-summaries"
+  }
+}
+EOF
 ```
 
-### 5단계: 스케줄러 설치
+### 5단계: 완료 메시지
 
-```bash
-bash ~/daily-work-tracker/scripts/install-scheduler.sh install
-```
-
-### 6단계: 설정 확인
-
-```bash
-python3 ~/daily-work-tracker/scripts/setup.py --status
-```
-
-## 설정 완료 메시지
-
-설정 완료 후 사용자에게 알려주세요:
+설정 완료 후 요약을 보여주세요:
 
 ```
 ✅ Daily Work Tracker 설정 완료!
 
 📋 설정 내용:
-- Notion MCP: [활성화/비활성화]
-- 자동 동기화: 매일 [시간]
-- 저장 위치: [Notion 페이지 / 로컬 폴더]
+- 로컬 저장: ✅ 활성화 (~/.claude/daily-work/)
+- Notion 동기화: [✅ 활성화 / ❌ 비활성화]
+- 자동 동기화: [매일 HH:MM / 비활성화]
 
 🚀 사용 방법:
-- /daily-summary: 오늘 작업 보기
-- /daily-sync: 수동 동기화
-- /daily-status: 설정 확인
+- /daily-summary  - 오늘 작업 보기
+- /daily-sync     - Notion 동기화
+- /daily-status   - 설정 확인
 ```
 
-## Fallback 동작
+## 중요
 
-- Notion MCP 연결 실패 시 → 로컬 `~/.claude/daily-summaries/`에 자동 저장
-- 수동으로도 `/daily-sync` 실행 가능
+- 로컬 저장은 **항상 활성화** (기본)
+- Notion은 **추가 옵션**으로 활성화 가능
+- Hook이 자동으로 모든 대화를 로컬에 기록함
