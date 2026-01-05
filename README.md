@@ -35,57 +35,6 @@ Claude Code 터미널에서:
 
 **참고**: 설치 후 Claude Code를 재시작하면 플러그인이 활성화됩니다.
 
-## 명령어
-
-| 명령어 | 설명 |
-|--------|------|
-| `/daily-work-tracker:daily-summary` | 오늘 작업 내역 보기 |
-| `/daily-work-tracker:daily-week` | 이번 주 작업 요약 |
-| `/daily-work-tracker:daily-clear` | 오늘 기록 삭제 |
-| `/daily-work-tracker:daily-setup` | 초기 설정 (Notion MCP + 스케줄) |
-| `/daily-work-tracker:daily-path` | 저장 경로 설정 |
-| `/daily-work-tracker:daily-sync` | Notion/로컬에 동기화 |
-| `/daily-work-tracker:daily-status` | 설정 상태 확인 |
-
-## 저장 위치
-
-### 기본 경로
-
-```
-~/.claude/daily-work/          # 작업 로그
-├── 2026-01-05.md
-├── 2026-01-04.md
-└── ...
-
-~/.claude/daily-summaries/     # 일일 요약
-├── 2026-01-05-summary.md
-└── ...
-
-~/.claude/daily-work-tracker/  # 설정
-└── config.json
-```
-
-### 경로 변경
-
-`/daily-work-tracker:daily-path` 명령어로 저장 경로 변경 가능
-
-## 파일 형식
-
-```markdown
-# 📅 2026-01-05 작업 기록
-
-## 🔹 flutter-app
-> `/Users/username/projects/flutter-app`
-
-- **[14:30]** 사용자 인증 어떻게 구현하면 좋을까? → Riverpod 추천
-- **[15:00]** 로그인 화면 만들어줘 → `login_page.dart` 생성
-
-## 🔹 backend-api
-> `/Users/username/projects/backend-api`
-
-- **[16:00]** API 엔드포인트 설계 → REST API 구조 제안
-```
-
 ## 설정
 
 ### 빠른 설정 (권장)
@@ -168,15 +117,66 @@ Notion에 일일 작업 요약을 자동 동기화하려면:
 
 ### 동기화 형식
 
-Notion에 Toggle 블록으로 날짜별 정리:
+Notion에 Toggle 블록으로 날짜+시간별 정리:
 
 ```
-📅 2026-01-05 | 4개 프로젝트 | 29개 대화
+📅 2026-01-05 17:30 | 4개 프로젝트 | 29개 대화
 ├─ 🔹 project-name
 │   ├─ [15:23] 질문 내용
 │   ├─ [16:00] 다른 질문
 │   └─ 📝 요약: Claude가 생성한 프로젝트 요약
 └─ 📊 전체 요약
+```
+
+## 명령어
+
+| 명령어 | 설명 |
+|--------|------|
+| `/daily-work-tracker:daily-setup` | 초기 설정 (저장 경로, Notion, 스케줄) |
+| `/daily-work-tracker:daily-sync` | Notion/로컬에 동기화 |
+| `/daily-work-tracker:daily-summary` | 오늘 작업 내역 보기 |
+| `/daily-work-tracker:daily-week` | 이번 주 작업 요약 |
+| `/daily-work-tracker:daily-status` | 설정 상태 확인 |
+| `/daily-work-tracker:daily-path` | 저장 경로 변경 |
+| `/daily-work-tracker:daily-clear` | 오늘 기록 삭제 |
+
+## 저장 위치
+
+### 기본 경로
+
+```
+~/.claude/daily-work/          # 작업 로그
+├── 2026-01-05.md
+├── 2026-01-04.md
+└── ...
+
+~/.claude/daily-summaries/     # 일일 요약
+├── 2026-01-05-summary.md
+└── ...
+
+~/.claude/daily-work-tracker/  # 설정
+└── config.json
+```
+
+### 경로 변경
+
+`/daily-work-tracker:daily-path` 명령어로 저장 경로 변경 가능
+
+## 파일 형식
+
+```markdown
+# 📅 2026-01-05 작업 기록
+
+## 🔹 flutter-app
+> `/Users/username/projects/flutter-app`
+
+- **[14:30]** 사용자 인증 어떻게 구현하면 좋을까? → Riverpod 추천
+- **[15:00]** 로그인 화면 만들어줘 → `login_page.dart` 생성
+
+## 🔹 backend-api
+> `/Users/username/projects/backend-api`
+
+- **[16:00]** API 엔드포인트 설계 → REST API 구조 제안
 ```
 
 ## 동작 방식

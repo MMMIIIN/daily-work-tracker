@@ -328,12 +328,15 @@ def generate_notion_blocks(projects, date_str):
         }
     })
 
-    # 최상위 toggle 블록 (날짜별 접을 수 있는 형태)
+    # 현재 시간 추가
+    current_time = datetime.now().strftime('%H:%M')
+
+    # 최상위 toggle 블록 (날짜+시간별 접을 수 있는 형태)
     toggle_block = {
         "type": "toggle",
         "toggle": {
             "rich_text": [
-                {"type": "text", "text": {"content": f"📅 {date_str}"}, "annotations": {"bold": True}},
+                {"type": "text", "text": {"content": f"📅 {date_str} {current_time}"}, "annotations": {"bold": True}},
                 {"type": "text", "text": {"content": f" | {len(projects)}개 프로젝트 | {total_tasks}개 대화 | {', '.join(all_keywords[:3])}"}}
             ],
             "children": children_blocks
