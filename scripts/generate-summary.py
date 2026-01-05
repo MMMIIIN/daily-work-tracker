@@ -99,35 +99,104 @@ def parse_daily_log(content):
     return projects
 
 
+def extract_task_summary(content, max_len=30):
+    """작업 내용에서 핵심 요약 추출 (명령형만)"""
+    # "→" 뒤에 요약이 있으면 우선 사용
+    if '→' in content:
+        summary_part = content.split('→')[-1].strip()
+        if summary_part:
+            # 괄호 제거
+            clean = re.sub(r'\s*\([^)]*\)\s*$', '', summary_part).strip()
+            if len(clean) > max_len:
+                return clean[:max_len-3] + '...'
+            return clean
+
+    # 질문 형식은 None 반환 (제외)
+    if '?' in content:
+        return None
+
+    # 명령형 패턴 확인 ("XXX 해봐", "XXX 추가해", "XXX 만들어")
+    command_patterns = [
+        r'(.+?)\s*(?:해줘|해봐|추가해|만들어|수정해|삭제해|설정해|확인해)\.?$',
+    ]
+    for pattern in command_patterns:
+        match = re.search(pattern, content)
+        if match:
+            extracted = match.group(1).strip()
+            if len(extracted) > 5:
+                if len(extracted) > max_len:
+                    return extracted[:max_len-3] + '...'
+                return extracted
+
+    # 명령형이 아니면 None
+    return None
+
+
+def categorize_task(content):
+    """작업 내용을 카테고리로 분류"""
+    content_lower = content.lower()
+
+    if any(k in content for k in ['설정', '설치', 'setup', 'config', 'install']):
+        return '설정'
+    if any(k in content for k in ['노션', 'notion', 'mcp', 'api', '연동', '동기화', 'sync']):
+        return 'Notion 연동'
+    if any(k in content for k in ['테스트', 'test', '확인', '검증']):
+        return '테스트'
+    if any(k in content for k in ['문서', 'readme', 'docs', '매뉴얼', 'manual']):
+        return '문서 작성'
+    if any(k in content for k in ['수정', '변경', '개선', 'fix', 'update', '버그']):
+        return '수정/개선'
+    if any(k in content for k in ['추가', '생성', '만들', 'add', 'create', 'new']):
+        return '기능 추가'
+    if any(k in content for k in ['삭제', '제거', 'delete', 'remove']):
+        return '삭제'
+    return None
+
+
 def generate_project_summary(project):
-    """프로젝트별 요약 생성"""
+    """프로젝트별 요약 생성 - 구체적인 작업 내용 포함"""
     task_count = len(project['tasks'])
 
-    # 주요 작업 키워드 추출 (간단한 방식)
-    keywords = []
+    # "→" 있는 항목만 구체적으로 표시 (Claude 요약)
+    arrow_summaries = []
+    categories = set()
+    seen = set()
+
     for task in project['tasks']:
         content = task['content']
-        # 주요 동작어 추출
-        if '추가' in content or '생성' in content:
-            keywords.append('기능 추가')
-        elif '수정' in content or '변경' in content or '개선' in content:
-            keywords.append('수정/개선')
-        elif '삭제' in content or '제거' in content:
-            keywords.append('삭제')
-        elif '테스트' in content or '확인' in content:
-            keywords.append('테스트')
-        elif '설정' in content or '설치' in content:
-            keywords.append('설정')
 
-    # 중복 제거
-    keywords = list(dict.fromkeys(keywords))
+        if '→' in content:
+            # "→" 뒤의 요약 추출
+            summary_part = content.split('→')[-1].strip()
+            if summary_part and len(summary_part) > 3:
+                # 괄호 안 내용 제거
+                clean_summary = re.sub(r'\s*\([^)]*\)\s*$', '', summary_part).strip()
+                # 민감정보 필터링 (API 키, 토큰 등)
+                if re.search(r'(ntn_|secret_|sk-|api[_-]?key)', clean_summary, re.I):
+                    continue
+                if clean_summary and clean_summary not in seen:
+                    seen.add(clean_summary)
+                    if len(clean_summary) > 28:
+                        clean_summary = clean_summary[:25] + '...'
+                    arrow_summaries.append(clean_summary)
+        else:
+            # "→" 없으면 카테고리만 수집
+            cat = categorize_task(content)
+            if cat:
+                categories.add(cat)
 
-    if not keywords:
-        keywords = ['작업 진행']
+    # 결과: "→" 요약 우선, 부족하면 카테고리 추가
+    summaries = arrow_summaries[:3]
+    if len(summaries) < 2 and categories:
+        remaining = 3 - len(summaries)
+        summaries.extend(list(categories)[:remaining])
+
+    if not summaries:
+        summaries = ['질의응답']
 
     return {
         'task_count': task_count,
-        'keywords': keywords[:3]  # 최대 3개
+        'keywords': summaries[:3]
     }
 
 
